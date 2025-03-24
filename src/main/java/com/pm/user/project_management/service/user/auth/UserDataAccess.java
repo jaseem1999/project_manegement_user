@@ -1,6 +1,7 @@
 package com.pm.user.project_management.service.user.auth;
 
 import com.pm.user.project_management.dto.model.UserCredential;
+import com.pm.user.project_management.dto.response.user.UserDetailsResponse;
 import com.pm.user.project_management.entity.user.UserAuth;
 import com.pm.user.project_management.entity.user.UserInfo;
 import com.pm.user.project_management.exception.UserForbiddenException;
@@ -60,5 +61,35 @@ public class UserDataAccess {
 
     public List<UserAuth> getAllUserAuth() {
         return userAuthRepository.findAll();
+    }
+
+    public UserDetailsResponse createUserDetailResponse(UserInfo userInfo) {
+        return UserDetailsResponse.builder()
+                .userId(userInfo.getId())
+                .status(userInfo.getUserAuth().getStatus())
+                .authId(userInfo.getUserAuth().getAuthId())
+                .active(userInfo.getUserAuth().getActive())
+                .email(userInfo.getUserAuth().getEmail())
+                .officialNumber(userInfo.getUserAuth().getOfficialNumber())
+                .fullName(userInfo.getFullName())
+                .dob(userInfo.getDob())
+                .gender(userInfo.getGender())
+                .maritalStatus(userInfo.getMaritalStatus())
+                .employeeId(userInfo.getEmployeeId())
+                .designation(userInfo.getDesignation())
+                .department(userInfo.getDepartment())
+                .joiningDate(userInfo.getJoiningDate())
+                .address(userInfo.getAddress())
+                .city(userInfo.getCity())
+                .state(userInfo.getState())
+                .country(userInfo.getCountry())
+                .personalEmail(userInfo.getPersonalEmail())
+                .personalPhone(userInfo.getPersonalPhone())
+                .createdAt(userInfo.getCreatedAt())
+                .updatedAt(userInfo.getUpdatedAt())
+                .createdBy(userInfo.getCreatedBy())
+                .updatedBy(userInfo.getUpdatedBy())
+                .adminUpdatedBy(userInfo.getAdminUpdatedBy())
+                .build();
     }
 }
