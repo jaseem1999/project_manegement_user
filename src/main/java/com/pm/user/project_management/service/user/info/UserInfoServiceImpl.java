@@ -76,10 +76,13 @@ public class UserInfoServiceImpl implements UserInfoService{
         }
         userInfo.setUpdatedAt(LocalDateTime.now());
         try {
-            userInfoRepository.save(userInfo);
+            userInfo=userInfoRepository.save(userInfo);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+        //TODO :: Update UserData
+        userDataAccess.getUserData().setAddress(userInfo.getAddress());
+
         UserDetailsResponse detailsResponse=userDataAccess.createUserDetailResponse(userInfo);
         return new ApiResponse<>(detailsResponse,
                 true,

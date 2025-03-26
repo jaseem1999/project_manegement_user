@@ -369,10 +369,82 @@ public class UserAuthServiceImpl implements UserAuthService {
                 HttpStatus.OK);
     }
 
+    //TODO :: Email can update admin also
     @Override
     public ApiResponse<EmailUpdateResponse> emailUpdate(EmailUpdateRequest emailUpdateRequest) {
-        return null;
+        UserAuth userAuth = userDataAccess.getUserAuth();
+        // Validate password
+        if (!encoder.matches(emailUpdateRequest.getPassword(), userAuth.getPassword())) {
+            return new ApiResponse<>(
+                    EmailUpdateResponse.builder()
+                            .message("Password mismatch")
+                            .isLoginRequired(false)
+                            .build(),
+                    false,
+                    "Invalid password",
+                    HttpStatus.FORBIDDEN
+            );
+        }
+
+        if (userAuth.getEmail().equals(emailUpdateRequest.getEmail())){
+            return new ApiResponse<>(
+                    EmailUpdateResponse.builder()
+                            .message("Your old email and new Email is same")
+                            .isLoginRequired(false)
+                            .build(),
+                    false,
+                    "Your old email and new Email is same",
+                    HttpStatus.NOT_ACCEPTABLE
+            );
+        }
+
+        // Check if the new email already exists
+        boolean isEmailExist = userAuthRepository.existsByEmail(emailUpdateRequest.getEmail())
+                && !userAuth.getEmail().equals(emailUpdateRequest.getEmail());
+
+        if (isEmailExist) {
+            return new ApiResponse<>(
+                    EmailUpdateResponse.builder()
+                            .message("Email already exists")
+                            .isLoginRequired(false)
+                            .build(),
+                    false,
+                    "Email already exists",
+                    HttpStatus.CONFLICT
+            );
+        }
+
+
+        userAuth.setEmail(emailUpdateRequest.getEmail());
+
+        try {
+            userAuthRepository.save(userAuth);
+        } catch (Exception e) {
+            return new ApiResponse<>(
+                    EmailUpdateResponse.builder()
+                            .message("Error updating email : " + e.getMessage())
+                            .isLoginRequired(false)
+                            .build(),
+                    false,
+                    "Internal Server Error",
+                    HttpStatus.INTERNAL_SERVER_ERROR
+            );
+        }
+
+
+        userDataAccess.getUserCredential().setEmail(userAuth.getEmail());
+
+        return new ApiResponse<>(
+                EmailUpdateResponse.builder()
+                        .message("Login required")
+                        .isLoginRequired(true)
+                        .build(),
+                true,
+                "Email updated successfully",
+                HttpStatus.OK
+        );
     }
+
 
 
     private RefreshToken createRefreshToken(UserAuth userAuth) {

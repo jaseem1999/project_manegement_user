@@ -29,7 +29,7 @@ public class UserAuthController {
         return new ResponseEntity<>(response,response.getStatus());
     }
 
-    //TODO :: update api (split)
+    //TODO :: update Phone number
     //password update
     @PostMapping(path = "/password/update", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<PasswordUpdateResponse>> updatePassword(
