@@ -62,6 +62,13 @@ public class GlobalExceptionHandler {
         return buildErrorResponse("Invalid Input", "Invalid input value: " + ex.getOriginalMessage(), HttpStatus.BAD_REQUEST, null);
     }
 
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<Map<String,Object>> handleRunTimeException(RuntimeException ex){
+        return buildErrorResponse("Internal run time error",
+                ex.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR,
+                Map.of("message", ex.getMessage()));
+    }
+
     private ResponseEntity<Map<String, Object>> buildErrorResponse(String title, String detail, HttpStatus status, Map<String, String> errors) {
         Map<String, Object> response = new HashMap<>();
         response.put("success", false);

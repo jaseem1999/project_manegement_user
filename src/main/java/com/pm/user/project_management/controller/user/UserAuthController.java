@@ -1,12 +1,8 @@
 package com.pm.user.project_management.controller.user;
 
 import com.pm.user.project_management.dto.ApiResponse;
-import com.pm.user.project_management.dto.request.auth.AddUserRequest;
-import com.pm.user.project_management.dto.request.auth.UserLoginRequest;
-import com.pm.user.project_management.dto.request.auth.UserRefreshTokenRequest;
-import com.pm.user.project_management.dto.response.user.UserDetailsResponse;
-import com.pm.user.project_management.dto.response.user.UserLoginResponse;
-import com.pm.user.project_management.dto.response.user.UserRefreshTokenResponse;
+import com.pm.user.project_management.dto.request.auth.*;
+import com.pm.user.project_management.dto.response.user.*;
 import com.pm.user.project_management.service.user.auth.UserAuthService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,8 +29,26 @@ public class UserAuthController {
         return new ResponseEntity<>(response,response.getStatus());
     }
 
-
     //TODO :: update api (split)
+    //password update
+    @PostMapping(path = "/password/update", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponse<PasswordUpdateResponse>> updatePassword(
+            @Valid @RequestBody PasswordUpdateRequest passwordUpdateRequest
+    ){
+       ApiResponse<PasswordUpdateResponse> response = userAuthService.passwordUpdate(passwordUpdateRequest);
+       return new ResponseEntity<>(response,response.getStatus());
+    }
+
+    @PostMapping(path = "/email/update", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponse<EmailUpdateResponse>> updateEmail(
+            @Valid @RequestBody EmailUpdateRequest emailUpdateRequest
+    ){
+        ApiResponse<EmailUpdateResponse> response = userAuthService.emailUpdate(emailUpdateRequest);
+        return new ResponseEntity<>(response,response.getStatus());
+    }
+
+
+
     //TODO :: delete api;
     //TODO :: status change api;
 

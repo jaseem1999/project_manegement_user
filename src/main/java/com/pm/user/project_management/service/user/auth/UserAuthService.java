@@ -1,12 +1,8 @@
 package com.pm.user.project_management.service.user.auth;
 
 import com.pm.user.project_management.dto.ApiResponse;
-import com.pm.user.project_management.dto.request.auth.AddUserRequest;
-import com.pm.user.project_management.dto.request.auth.UserLoginRequest;
-import com.pm.user.project_management.dto.request.auth.UserRefreshTokenRequest;
-import com.pm.user.project_management.dto.response.user.UserDetailsResponse;
-import com.pm.user.project_management.dto.response.user.UserLoginResponse;
-import com.pm.user.project_management.dto.response.user.UserRefreshTokenResponse;
+import com.pm.user.project_management.dto.request.auth.*;
+import com.pm.user.project_management.dto.response.user.*;
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -22,4 +18,8 @@ public interface UserAuthService {
     ApiResponse<UserDetailsResponse> getOwnDetails();
 
     ApiResponse<List<UserDetailsResponse>> getAllUserDetails();
+
+    ApiResponse<PasswordUpdateResponse> passwordUpdate(@Valid PasswordUpdateRequest passwordUpdateRequest);
+
+    ApiResponse<EmailUpdateResponse> emailUpdate(@Valid EmailUpdateRequest emailUpdateRequest);
 }

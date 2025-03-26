@@ -1,6 +1,7 @@
 package com.pm.user.project_management.service.user.auth;
 
 import com.pm.user.project_management.dto.model.UserCredential;
+import com.pm.user.project_management.dto.model.UserData;
 import com.pm.user.project_management.dto.response.user.UserDetailsResponse;
 import com.pm.user.project_management.entity.user.UserAuth;
 import com.pm.user.project_management.entity.user.UserInfo;
@@ -26,12 +27,22 @@ public class UserDataAccess {
 
     private UserCredential userCredential;
 
+    private UserData userData;
+
     public UserCredential getUserCredential() {
         return userCredential;
     }
 
     public void setUserCredential(UserCredential userCredential) {
         this.userCredential = userCredential;
+    }
+
+    public UserData getUserData() {
+        return userData;
+    }
+
+    public void setUserData(UserData userData) {
+        this.userData = userData;
     }
 
     public UserDataAccess(BankAccountRepository bankAccountRepository, UserAuthRepository userAuthRepository, UserInfoRepository userInfoRepository, JwtFilter jwtFilter, JwtUtils jwtUtils) {
@@ -47,7 +58,6 @@ public class UserDataAccess {
         if (email == null){
             new RuntimeException("Jwt token validation failed, email not found");
         }
-        System.out.println(getUserCredential().toString());
         UserAuth userAuth = userAuthRepository.findByEmail(email);
         if(userAuth.getAuthId() != getUserCredential().getUserAuthid()){
             throw new UserForbiddenException("User forbidden exception");

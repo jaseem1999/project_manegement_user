@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Map;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -18,4 +20,7 @@ public class UserLoginResponse {
     private UserActive active;
     private String accessToken;
     private String refreshToken;
+    private Boolean isUserDataAddRequired;
+    private Boolean isUserInfoFullyCompleted;
+    private Map<String,Boolean> dataStatus;
 }

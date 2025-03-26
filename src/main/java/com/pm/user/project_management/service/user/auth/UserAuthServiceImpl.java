@@ -2,10 +2,9 @@ package com.pm.user.project_management.service.user.auth;
 
 import com.pm.user.project_management.dto.ApiResponse;
 import com.pm.user.project_management.dto.model.UserCredential;
+import com.pm.user.project_management.dto.model.UserData;
 import com.pm.user.project_management.dto.request.auth.*;
-import com.pm.user.project_management.dto.response.user.UserDetailsResponse;
-import com.pm.user.project_management.dto.response.user.UserLoginResponse;
-import com.pm.user.project_management.dto.response.user.UserRefreshTokenResponse;
+import com.pm.user.project_management.dto.response.user.*;
 import com.pm.user.project_management.entity.user.RefreshToken;
 import com.pm.user.project_management.entity.user.UserAuth;
 import com.pm.user.project_management.entity.user.UserInfo;
@@ -125,22 +124,57 @@ public class UserAuthServiceImpl implements UserAuthService {
             } catch (RuntimeException e) {
                 throw new RuntimeException(e);
             }
+            String jwtToken = jwtUtils.generateToken(userAuth.getEmail().toLowerCase());
+            String refreshToken = createRefreshToken(userAuth).getToken();
             UserCredential userCredential=UserCredential.builder().officeNumber(userAuth.getOfficialNumber())
                     .userAuthid(userAuth.getAuthId())
                     .email(userAuth.getEmail())
                     .build();
-            userDataAccess.setUserCredential(userCredential);
-            String jwtToken = jwtUtils.generateToken(userAuth.getEmail().toLowerCase());
-            String refreshToken = createRefreshToken(userAuth).getToken();
-
-            UserLoginResponse userLoginResponse = UserLoginResponse
-                    .builder().userAuthId(userAuth.getAuthId())
+            UserLoginResponse.UserLoginResponseBuilder userLoginResponseBuilder = UserLoginResponse.builder()
+                    .userAuthId(userAuth.getAuthId())
                     .active(userAuth.getActive())
                     .status(userAuth.getStatus())
                     .officialNumber(userAuth.getOfficialNumber())
                     .accessToken(jwtToken)
-                    .refreshToken(refreshToken)
-                    .build();
+                    .refreshToken(refreshToken);
+
+            if (userAuth.getUserInfo() != null ) {
+
+                Map<String,Boolean> dataMap=verifyUserDataFullyCompleted(userAuth.getUserInfo());
+
+                boolean completed=dataMap.values().stream().allMatch(value -> value);
+                if (!completed){
+                    userLoginResponseBuilder.isUserInfoFullyCompleted(true);
+                    userLoginResponseBuilder.dataStatus(dataMap);
+                }else {
+                    userLoginResponseBuilder.isUserInfoFullyCompleted(false);
+                }
+
+                UserData userData = UserData.builder().userId(userAuth.getUserInfo().getId())
+                        .fullName(userAuth.getUserInfo().getFullName())
+                        .dob(userAuth.getUserInfo().getDob())
+                        .gender(userAuth.getUserInfo().getGender())
+                        .maritalStatus(userAuth.getUserInfo().getMaritalStatus())
+                        .employeeId(userAuth.getUserInfo().getEmployeeId())
+                        .designation(userAuth.getUserInfo().getDesignation())
+                        .department(userAuth.getUserInfo().getDepartment())
+                        .joiningDate(userAuth.getUserInfo().getJoiningDate())
+                        .address(userAuth.getUserInfo().getAddress())
+                        .city(userAuth.getUserInfo().getCity())
+                        .state(userAuth.getUserInfo().getState())
+                        .country(userAuth.getUserInfo().getCountry())
+                        .personalEmail(userAuth.getUserInfo().getPersonalEmail())
+                        .personalPhone(userAuth.getUserInfo().getPersonalPhone())
+                        .build();
+                userDataAccess.setUserData(userData);
+                userLoginResponseBuilder.isUserDataAddRequired(false);
+            }else{
+                userLoginResponseBuilder.isUserDataAddRequired(true);
+            }
+            userDataAccess.setUserCredential(userCredential);
+
+            UserLoginResponse userLoginResponse= userLoginResponseBuilder.build();
+
             return new ApiResponse<>(userLoginResponse
                     ,true
                     ,"Login successful"
@@ -151,6 +185,30 @@ public class UserAuthServiceImpl implements UserAuthService {
                 ,"Invalid email or password"
                 ,HttpStatus.OK);
     }
+
+
+    public Map<String, Boolean> verifyUserDataFullyCompleted(UserInfo userInfo) {
+        Map<String, Boolean> responseMap = new HashMap<>();
+
+        responseMap.put("fullName", userInfo.getFullName() != null && !userInfo.getFullName().isEmpty());
+        responseMap.put("phoneNumber", userInfo.getPhoneNumber() != null && !userInfo.getPhoneNumber().isEmpty());
+        responseMap.put("dob", userInfo.getDob() != null);
+        responseMap.put("gender", userInfo.getGender() != null);
+        responseMap.put("maritalStatus", userInfo.getMaritalStatus() != null);
+        responseMap.put("employeeId", userInfo.getEmployeeId() != null && !userInfo.getEmployeeId().isEmpty());
+        responseMap.put("designation", userInfo.getDesignation() != null && !userInfo.getDesignation().isEmpty());
+        responseMap.put("department", userInfo.getDepartment() != null && !userInfo.getDepartment().isEmpty());
+        responseMap.put("joiningDate", userInfo.getJoiningDate() != null);
+        responseMap.put("address", userInfo.getAddress() != null && !userInfo.getAddress().isEmpty());
+        responseMap.put("city", userInfo.getCity() != null && !userInfo.getCity().isEmpty());
+        responseMap.put("state", userInfo.getState() != null && !userInfo.getState().isEmpty());
+        responseMap.put("country", userInfo.getCountry() != null && !userInfo.getCountry().isEmpty());
+        responseMap.put("personalEmail", userInfo.getPersonalEmail() != null && !userInfo.getPersonalEmail().isEmpty());
+        responseMap.put("personalPhone", userInfo.getPersonalPhone() != null && !userInfo.getPersonalPhone().isEmpty());
+
+        return responseMap;
+    }
+
 
     @Override
     public ApiResponse<UserRefreshTokenResponse> verifyRefreshToken(UserRefreshTokenRequest requestRefreshToken) {
@@ -267,6 +325,53 @@ public class UserAuthServiceImpl implements UserAuthService {
         }).collect(Collectors.toList());
 
         return new ApiResponse<>(userDetailsResponses, true, "Users fetched successfully", HttpStatus.OK);
+    }
+
+    @Override
+    public ApiResponse<PasswordUpdateResponse> passwordUpdate(PasswordUpdateRequest passwordUpdateRequest) {
+        UserAuth userAuth=userDataAccess.getUserAuth();
+        if (!encoder.matches(passwordUpdateRequest.getOldPassword(),userAuth.getPassword())){
+            return new ApiResponse<>(
+                    PasswordUpdateResponse.builder()
+                            .message("Password mismatch")
+                            .isLoginRequired(false)
+                            .build(),
+                    false,
+                    "Invalid password",
+                    HttpStatus.FORBIDDEN
+            );
+        }
+
+        if (passwordUpdateRequest.getOldPassword().equals(userAuth.getPassword())){
+            return new ApiResponse<>(
+                    PasswordUpdateResponse.builder()
+                            .message("Old password and new password is same")
+                            .isLoginRequired(false)
+                            .build(),
+                    false,
+                    "Old password and new password is same",
+                    HttpStatus.NOT_ACCEPTABLE
+            );
+        }
+
+        userAuth.setPassword(encoder.encode(passwordUpdateRequest.getNewPassword()));
+        try {
+            userAuthRepository.save(userAuth);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return new ApiResponse<>( PasswordUpdateResponse.builder()
+                .message("Login required")
+                .isLoginRequired(true)
+                .build(),
+                true,
+                "Password updated successful",
+                HttpStatus.OK);
+    }
+
+    @Override
+    public ApiResponse<EmailUpdateResponse> emailUpdate(EmailUpdateRequest emailUpdateRequest) {
+        return null;
     }
 
 
